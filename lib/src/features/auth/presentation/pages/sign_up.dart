@@ -235,6 +235,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           final name = formGroup
                               .control(FormControlName.name)
                               .value as String;
+
                           final email = formGroup
                               .control(FormControlName.email)
                               .value as String;

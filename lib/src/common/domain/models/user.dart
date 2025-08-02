@@ -1,5 +1,4 @@
 import 'package:hive/hive.dart';
-import 'package:cracte/src/common/common.dart';
 part 'user.g.dart';
 
 @HiveType(typeId: 2)

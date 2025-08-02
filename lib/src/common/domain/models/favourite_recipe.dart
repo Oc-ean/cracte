@@ -1,5 +1,6 @@
-import 'package:hive/hive.dart';
 import 'package:cracte/src/common/common.dart';
+import 'package:hive/hive.dart';
+
 part 'favourite_recipe.g.dart';
 
 @HiveType(typeId: 3)
