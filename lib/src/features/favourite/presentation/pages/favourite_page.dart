@@ -23,7 +23,7 @@ class _FavouritePageState extends State<FavouritePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Favourite Page'),
+        title: const Text('Favourite'),
       ),
       body: BlocBuilder<FavouriteRecipeCubit, List<FavouriteRecipe>>(
         bloc: getIt<FavouriteRecipeCubit>(),

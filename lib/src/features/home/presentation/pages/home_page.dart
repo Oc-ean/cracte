@@ -82,6 +82,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ];
 
             final isPaginating = state is RecipeLoaded && state.isPaginating;
+            final sortedRecipes = sortRecipe(recipes);
 
             return RefreshIndicator(
               onRefresh: () => _cubit.getRecipes(),
@@ -99,9 +100,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      itemCount: sortRecipe(recipes).length,
+                      itemCount: sortedRecipes.length,
                       itemBuilder: (context, index) => RecipeCard(
-                        recipe: sortRecipe(recipes)[index],
+                        recipe: sortedRecipes[index],
                         onTap: () => context.push(
                           Routes.details.path,
                           extra: {

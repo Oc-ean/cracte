@@ -24,7 +24,6 @@ class RecipeDataSource {
     try {
       await _recipeBox.clear();
       await _recipeBox.addAll(recipes);
-      // Only emit to stream when data actually changes
       recipeController.add(recipes);
     } catch (e) {
       logman.error('Failed to save recipes: $e');
