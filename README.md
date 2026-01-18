@@ -1,16 +1,20 @@
 # cracte
 
-A new project generated using flutter_starter from Sorcel Tech
+recipe app
 
-## Getting Started
+### 📷 **ScreenShots**
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
+<img src="screenshots/select_profile.png" width="200"/>  <img src="screenshots/create_account.png" width="200"/>  
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+<img src="screenshots/home.png" width="200"/>      <img src="screenshots/explore.png" width="200"/>
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<img src="screenshots/favourite.png" width="200"/>        <img src="screenshots/profile.png" width="190"/>
+
+<img src="screenshots/add_recipe.png" width="200"/>      <img src="screenshots/search.png" width="207"/>
+
+<img src="screenshots/details_ingredient.png" width="200"/>        <img src="screenshots/details_step.png" width="200"/>
+
+<img src="screenshots/cooking_steps.png" width="200"/>      <img src="screenshots/cooking_mode.png" width="200"/>
+
+
