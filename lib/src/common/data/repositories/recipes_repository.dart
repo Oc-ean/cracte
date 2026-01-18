@@ -22,14 +22,14 @@ class RecipeRepository {
       return [];
     }
     await _dataSource.saveRecipes(recipes);
-    _totalRecipes = recipes.length; // Update cache
+    _totalRecipes = recipes.length;
     return recipes;
   }
 
   Future<List<Recipe>> getRecipes() async {
     try {
       final recipes = await _dataSource.getRecipes();
-      _totalRecipes = recipes.length; // Update cache
+      _totalRecipes = recipes.length;
       return recipes;
     } catch (e, s) {
       logman.error('Failed to fetch recipes: $e', stackTrace: s);
@@ -43,27 +43,39 @@ class RecipeRepository {
       final newId = DateTime.now().millisecondsSinceEpoch.toString();
       final newRecipe = recipe.copyWith(id: newId);
 
-      currentRecipes.add(newRecipe);
+      // Add to beginning of list for better UX
+      currentRecipes.insert(0, newRecipe);
       await _dataSource.saveRecipes(currentRecipes);
-      _totalRecipes = currentRecipes.length; // Update cache
+      _totalRecipes = currentRecipes.length;
 
-      _currentPage = 0;
-      await fetchPaginatedRecipes(page: 1);
+      // Reset pagination completely and start fresh
+      await _resetPaginationAndFetch();
 
       if (newRecipe.authorId.isNotEmpty) {
         await getIt<UserRecipeRepository>().fetchPaginatedUserRecipes(page: 1);
       }
     } catch (e, s) {
       logman.error('Failed to add recipe: $e', stackTrace: s);
+      rethrow;
     }
   }
 
   Future<void> updateRecipe(Recipe recipe) async {
     try {
       await _dataSource.updateRecipe(recipe);
-      await fetchPaginatedRecipes(page: _currentPage > 0 ? _currentPage : 1);
+
+      // Update the recipe in loaded recipes if it exists
+      final index = _loadedRecipes.indexWhere((r) => r.id == recipe.id);
+      if (index != -1) {
+        _loadedRecipes[index] = recipe;
+        _recipesStreamController.add(List.from(_loadedRecipes));
+      } else {
+        // If not in loaded recipes, refresh from current page
+        await fetchPaginatedRecipes(page: _currentPage > 0 ? _currentPage : 1);
+      }
     } catch (e, s) {
       logman.error('Failed to update recipe: $e', stackTrace: s);
+      rethrow;
     }
   }
 
@@ -85,21 +97,19 @@ class RecipeRepository {
     }
   }
 
-  // Remove this method - use the data source stream directly
-  // Stream<List<Recipe>> streamRecipes() {
-  //   getRecipes().then((recipes) {
-  //     _dataSource.recipeController.add(recipes);
-  //   });
-  //   return _dataSource.getRecipesStream();
-  // }
-
   Future<List<Recipe>> fetchPaginatedRecipes({
     required int page,
     int limit = 10,
+    bool refresh = false,
   }) async {
     try {
+      // If refresh is true, reset everything
+      if (refresh) {
+        await _resetPaginationState();
+      }
+
       List<Recipe> allRecipes;
-      if (!_isInitialized || _totalRecipes == 0) {
+      if (!_isInitialized || _totalRecipes == 0 || refresh) {
         allRecipes = await getRecipes();
         _isInitialized = true;
       } else {
@@ -115,8 +125,8 @@ class RecipeRepository {
       final end = start + limit;
       final pageRecipes = allRecipes.sublist(start, end > total ? total : end);
 
-      if (page == 1) {
-        _loadedRecipes = pageRecipes;
+      if (page == 1 || refresh) {
+        _loadedRecipes = List.from(pageRecipes);
         _currentPage = 1;
       } else if (page > _currentPage) {
         _loadedRecipes.addAll(pageRecipes);
@@ -133,22 +143,44 @@ class RecipeRepository {
     }
   }
 
+  Future<void> _resetPaginationAndFetch() async {
+    await _resetPaginationState();
+    await fetchPaginatedRecipes(page: 1, refresh: true);
+  }
+
+  Future<void> _resetPaginationState() async {
+    _loadedRecipes.clear();
+    _currentPage = 0;
+    _isInitialized = false;
+  }
+
   Stream<List<Recipe>> get recipesStream => _recipesStreamController.stream;
 
   int get totalRecipes => _totalRecipes;
+  int get currentPage => _currentPage;
+  bool get hasMorePages => (_currentPage * 10) < _totalRecipes;
 
   Future<void> deleteRecipe(String id) async {
     try {
       final recipes = await getRecipes();
       final updatedRecipes = recipes.where((r) => r.id != id).toList();
       await _dataSource.saveRecipes(updatedRecipes);
-      _totalRecipes = updatedRecipes.length; // Update cache
+      _totalRecipes = updatedRecipes.length;
 
-      // Reset pagination and fetch first page
-      _currentPage = 0;
-      await fetchPaginatedRecipes(page: 1);
+      // Remove from loaded recipes if present
+      _loadedRecipes.removeWhere((r) => r.id == id);
+
+      // If we have fewer loaded recipes than expected, try to load more
+      final expectedRecipes = _currentPage * 10;
+      if (_loadedRecipes.length < expectedRecipes &&
+          _loadedRecipes.length < _totalRecipes) {
+        await _resetPaginationAndFetch();
+      } else {
+        _recipesStreamController.add(List.from(_loadedRecipes));
+      }
     } catch (e, s) {
       logman.error('Failed to delete recipe: $e', stackTrace: s);
+      rethrow;
     }
   }
 

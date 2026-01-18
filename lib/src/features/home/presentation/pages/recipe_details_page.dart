@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cracte/src/common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,6 +17,7 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage>
     with TickerProviderStateMixin {
   late TabController _tabController;
   int _currentIndex = 0;
+  String? userId;
 
   late Recipe? _recipe;
 
@@ -60,6 +60,9 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage>
           BlocBuilder<UserCubit, UserState>(
             bloc: getIt<UserCubit>(),
             builder: (context, state) {
+              userId = state is UserLoaded ? state.user.id : null;
+
+              print('User id ===> $userId');
               final isOwner =
                   state is UserLoaded && state.user.id == _recipe!.authorId;
               return isOwner
@@ -81,16 +84,11 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
+                    CustomImage(
                       height: 150,
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        image: DecorationImage(
-                          image: CachedNetworkImageProvider(_recipe!.image),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                      imagePath: _recipe!.image,
+                      boxShape: BoxShape.rectangle,
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -108,6 +106,7 @@ class _RecipeDetailsPageState extends State<RecipeDetailsPage>
                       authorImage: _recipe!.authorImage,
                       authorName: _recipe!.authorName,
                       authorId: _recipe!.authorId,
+                      currentUserId: userId ?? '',
                     ),
                     const SizedBox(height: 20),
                     StyledSegmentedTabs(
@@ -255,22 +254,6 @@ class _IngredientTile extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey.shade400,
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(
-              Icons.check,
-              size: 16,
-              color: Colors.transparent,
-            ),
-          ),
         ],
       ),
     );
@@ -356,27 +339,23 @@ class _AuthorTiles extends StatelessWidget {
   final String authorName;
   final String authorImage;
   final String authorId;
+  final String currentUserId;
 
   const _AuthorTiles({
     required this.authorName,
     required this.authorImage,
     required this.authorId,
+    required this.currentUserId,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
+        CustomImage(
+          imagePath: authorImage,
           height: 40,
           width: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            image: DecorationImage(
-              image: CachedNetworkImageProvider(authorImage),
-              fit: BoxFit.cover,
-            ),
-          ),
         ),
         const SizedBox(width: 10),
         Text(
@@ -387,6 +366,7 @@ class _AuthorTiles extends StatelessWidget {
           ),
         ),
         const Spacer(),
+        if(currentUserId != authorId)
         FollowButton(
           targetUserId: authorId,
           targetUserName: authorName,

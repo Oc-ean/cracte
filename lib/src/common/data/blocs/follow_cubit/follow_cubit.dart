@@ -25,7 +25,10 @@ class FollowCubit extends Cubit<FollowState> {
   }
 
   Future<void> toggleFollow(
-      String userId, String? userName, String? userImage,) async {
+    String userId,
+    String? userName,
+    String? userImage,
+  ) async {
     final isFollowing = _followingStatus[userId] ?? false;
     if (isFollowing) {
       await unfollowUser(userId);
@@ -35,7 +38,10 @@ class FollowCubit extends Cubit<FollowState> {
   }
 
   Future<void> followUser(
-      String userId, String? userName, String? userImage,) async {
+    String userId,
+    String? userName,
+    String? userImage,
+  ) async {
     emit(FollowLoading());
     try {
       final success =

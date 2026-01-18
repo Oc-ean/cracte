@@ -20,6 +20,7 @@ class RecipeCubit extends Cubit<RecipeState> {
 
   Future<void> saveDefaultRecipes() async {
     try {
+      
       final existing = await repository.getRecipes();
       if (existing.isEmpty) {
         await repository.saveDefaultRecipes(recipes);
@@ -27,7 +28,7 @@ class RecipeCubit extends Cubit<RecipeState> {
       await getRecipes();
     } catch (e) {
       logman.error('Failed to save default recipes: $e');
-      const RecipeError('Failed to save default recipes');
+      emit(const RecipeError('Failed to save default recipes'));
     }
   }
 
@@ -35,21 +36,20 @@ class RecipeCubit extends Cubit<RecipeState> {
     _recipeSubscription?.cancel();
 
     _recipeSubscription = repository.recipesStream.listen(
-      (pageRecipes) {
+      (loadedRecipes) {
         try {
-          if (pageRecipes.isEmpty) {
+          if (loadedRecipes.isEmpty && repository.totalRecipes == 0) {
             emit(RecipeEmpty());
             return;
           }
 
           const limit = 10;
-          final currentPage = (pageRecipes.length / limit).ceil();
-
+          final currentPage = repository.currentPage;
           final totalPages = (repository.totalRecipes / limit).ceil();
 
           emit(
             RecipeLoaded(
-              recipes: pageRecipes,
+              recipes: loadedRecipes,
               page: currentPage,
               totalPages: totalPages,
             ),
@@ -66,13 +66,15 @@ class RecipeCubit extends Cubit<RecipeState> {
     );
   }
 
-  Future<void> getRecipes({int limit = 10}) async {
-    if (state is! RecipeLoaded && state is! RecipeLoading) {
+  Future<void> getRecipes({int limit = 10, bool refresh = false}) async {
+    // Only show loading for initial load, not for refresh
+    if (!refresh && state is! RecipeLoaded && state is! RecipeLoading) {
       emit(RecipeLoading());
     }
 
     try {
-      await repository.fetchPaginatedRecipes(page: 1, limit: limit);
+      await repository.fetchPaginatedRecipes(
+          page: 1, limit: limit, refresh: refresh);
     } catch (e) {
       logman.error('Failed to get recipes: $e');
       emit(const RecipeError('Failed to load recipes'));
@@ -82,6 +84,7 @@ class RecipeCubit extends Cubit<RecipeState> {
   Future<void> addRecipe(Recipe recipe) async {
     try {
       await repository.addRecipe(recipe);
+      // Repository handles pagination reset, no need to manually fetch here
     } catch (e) {
       logman.error('Failed to add recipe: $e');
       emit(const RecipeError('Failed to add recipe'));
@@ -91,6 +94,7 @@ class RecipeCubit extends Cubit<RecipeState> {
   Future<void> updateRecipe(Recipe recipe) async {
     try {
       await repository.updateRecipe(recipe);
+      // Repository handles the update and state emission
     } catch (e) {
       logman.error('Failed to update recipe: $e');
       emit(const RecipeError('Failed to update recipe'));
@@ -100,6 +104,7 @@ class RecipeCubit extends Cubit<RecipeState> {
   Future<void> deleteRecipe(String id) async {
     try {
       await repository.deleteRecipe(id);
+      // Repository handles pagination adjustment
     } catch (e) {
       logman.error('Failed to delete recipe: $e');
       emit(const RecipeError('Failed to delete recipe'));
@@ -111,12 +116,14 @@ class RecipeCubit extends Cubit<RecipeState> {
 
     final previousState = state as RecipeLoaded;
 
-    if (previousState.page >= previousState.totalPages) {
+    // Check if we have more pages to load
+    if (!repository.hasMorePages) {
       return;
     }
 
     final nextPage = previousState.page + 1;
 
+    // Emit loading state for pagination
     emit(
       RecipeLoaded(
         recipes: previousState.recipes,
@@ -128,9 +135,11 @@ class RecipeCubit extends Cubit<RecipeState> {
 
     try {
       await repository.fetchPaginatedRecipes(page: nextPage, limit: limit);
+      // The stream will emit the new state automatically
     } catch (e) {
       logman.error('Failed to paginate recipes: $e');
 
+      // Restore previous state on error
       emit(
         RecipeLoaded(
           recipes: previousState.recipes,
@@ -139,6 +148,10 @@ class RecipeCubit extends Cubit<RecipeState> {
         ),
       );
     }
+  }
+
+  Future<void> refreshRecipes() async {
+    await getRecipes(refresh: true);
   }
 
   @override

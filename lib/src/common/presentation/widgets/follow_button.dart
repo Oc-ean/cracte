@@ -74,10 +74,12 @@ class _FollowButtonState extends State<FollowButton> {
   Future<void> _handleFollowToggle() async {
     try {
       await _followCubit.toggleFollow(
-          widget.targetUserId, widget.targetUserName, widget.targetUserImage,);
+        widget.targetUserId,
+        widget.targetUserName,
+        widget.targetUserImage,
+      );
       widget.onFollowChanged?.call();
     } catch (e) {
-      // Handle error if needed
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

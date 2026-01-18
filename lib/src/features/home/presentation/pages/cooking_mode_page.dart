@@ -906,6 +906,7 @@ class _StepButton extends StatelessWidget {
     return CustomButton(
       height: 48,
       text: label,
+      textColor: isPrimary ? Colors.white : Colors.grey.shade700,
       icon: Icon(
         icon,
         color: isPrimary
