@@ -13,7 +13,7 @@ recipe app
 
 <img src="screen_shots/create.png" width="200"/>      <img src="screen_shots/search.png" width="200"/>
 
-<img src="screen_shots/details_ingredient.png" width="200"/>        <img src="screen_shots/details_step.png" width="200"/>
+<img src="screen_shots/details_ingredients.png" width="200"/>        <img src="screen_shots/details_step.png" width="200"/>
 
 <img src="screen_shots/cooking_steps.png" width="200"/>      <img src="screen_shots/cooking_mode.png" width="200"/>
 
